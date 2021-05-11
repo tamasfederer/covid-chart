@@ -1,0 +1,11 @@
+* {
+	padding: 0;
+	margin: 0;
+
+	font-family: Helvetica, sans-serif;
+
+	--header-bg-color: rgb(8, 81, 156);
+	--header-fg-color: rgb(255, 255, 255);
+
+	--input-glow-color: rgb(49,130,189);
+}
