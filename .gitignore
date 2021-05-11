@@ -3,6 +3,7 @@ node_modules
 /dist
 /api/dl
 /api/update-db.sh
+/api/covid.db
 
 
 # local env files
