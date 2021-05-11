@@ -1,24 +1,5 @@
-# covid-chart
+# Covid chart
 
-## Project setup
-```
-npm install
-```
+At the end of 2019 the COVID-19 hit the whole world. Everybody understood quite early that the most important thing is to limit the number of infections and then, to increase the vaccination. With this application one can compare the status of COVID-19 in different countries.
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+Visit the [page](https://covid.tamasfederer.com/)
