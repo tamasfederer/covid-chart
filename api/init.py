@@ -4,6 +4,10 @@ import os
 import sqlite3
 import requests
 import datetime
+import logging
+
+# Config logging
+logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 
 # Config
 IS_DOWNLOAD = True
@@ -15,7 +19,7 @@ GITHUB_URL = 'https://raw.githubusercontent.com/'
 CC_URL = '/lukes/ISO-3166-Countries-with-Regional-Codes/master/slim-3/'
 CC_FILE = 'slim-3.json'
 
-# Our world in data
+# Our World In Data
 OWID_URL = 'owid/covid-19-data/master/public/data/'
 OWID_FILES = [
     'jhu/biweekly_cases.csv',
@@ -36,6 +40,8 @@ OWID_FILES = [
     'jhu/weekly_deaths_per_million.csv'
     # 'jhu/COVID-19%20-%20Johns%20Hopkins%20University.csv'
 ]
+
+# Vaccination file
 VACCIONATION_FILE = 'vaccinations/vaccinations.csv'
 
 # Download foleder
@@ -43,13 +49,14 @@ DL_FOLDER = './dl/'
 
 # Outputs
 OUTPUT_DB = './covid.db'
-# OUTPUT_COUNTRIES = './countries.json'
-OUTPUT_COUNTRIES = '../src/countries.json'
+OUTPUT_COUNTRIES = './countries.json'
+# OUTPUT_COUNTRIES = '../src/countries.json'
 
 # Set start date
 start_date = datetime.date(2020, 1, 22)
 
 
+# Download data
 def download(url):
     headers = requests.utils.default_headers()
     headers.update({
@@ -65,6 +72,7 @@ def download(url):
     return req.content
 
 
+# Write data
 def write(filename, content):
     with open(filename, 'wb') as f:
         f.write(content)
@@ -72,6 +80,8 @@ def write(filename, content):
 
 
 # Download data if needed
+logging.info(f'Download data ... ')
+
 if IS_DOWNLOAD:
     # Download country codes
     url = GITHUB_URL + CC_URL + CC_FILE
@@ -92,9 +102,52 @@ if IS_DOWNLOAD:
 
         write(filename, download(url))
 
-# Create countries
+    logging.info(f'  DONE')
+else:
+    logging.info(f'  SKIPPED')
+
+
+# Read countries
+logging.info(f'Read countries ...')
+
 filename = DL_FOLDER + os.path.basename(CC_FILE)
 countries = []
+
+unicode_names = {
+    'land Islands': 'Aland Islands',
+    'Cura': 'Curacao',
+    'union': 'Reunion',
+    'Saint Barth': 'Saint Barthelemy',
+    'Ivoire': 'Cote d\'Ivoire'
+}
+
+matching_names = {
+    'Bolivia (Plurinational State of)': 'Bolivia',
+    'Brunei Darussalam': 'Brunei',
+    'Cabo Verde': 'Cape Verde',
+    'Congo, Democratic Republic of the': 'Democratic Republic of Congo',
+    'Faroe Islands': 'Faeroe Islands',
+    'Iran (Islamic Republic of)': 'Iran',
+    "Lao People's Democratic Republic": 'Laos',
+    'Micronesia (Federated States of)': 'Micronesia (country)',
+    'Moldova, Republic of': 'Moldova',
+    'Palestine, State of': 'Palestine',
+    'Russian Federation': 'Russia',
+    'Korea, Republic of': 'South Korea',
+    'Syrian Arab Republic': 'Syria',
+    'Taiwan, Province of China': 'Taiwan',
+    'Tanzania, United Republic of': 'Tanzania',
+    'Timor-Leste': 'Timor',
+    'United Kingdom of Great Britain and Northern Ireland': 'United Kingdom',
+    'United States of America': 'United States',
+    'Holy See': 'Vatican',
+    'Venezuela (Bolivarian Republic of)': 'Venezuela',
+    'Viet Nam': 'Vietnam',
+    'Falkland Islands (Malvinas)': 'Falkland Islands',
+    'Saint Helena, Ascension and Tristan da Cunha': 'Saint Helena',
+    'Bonaire, Sint Eustatius and Saba': 'Bonaire Sint Eustatius and Saba',
+    'Virgin Islands (British)': 'British Virgin Islands'
+}
 
 with open(filename, encoding='utf-8') as f:
     data = json.load(f)
@@ -102,70 +155,32 @@ with open(filename, encoding='utf-8') as f:
         try:
             name = country['name'].encode('ascii', 'strict').decode("ascii")
         except UnicodeEncodeError:
-            if ('land Islands' in country['name']):
-                name = 'Aland Islands'
-            elif ('Cura' in country['name']):
-                name = 'Curacao'
-            elif ('union' in country['name']):
-                name = 'Reunion'
-            elif ('Saint Barth' in country['name']):
-                name = 'Saint Barthelemy'
-            elif ('Ivoire' in country['name']):
-                name = "Cote d'Ivoire"
-            else:
-                print(country['name'])
+            match = False
 
-        if name == 'Bolivia (Plurinational State of)':
-            name = 'Bolivia'
-        elif name == 'Brunei Darussalam':
-            name = 'Brunei'
-        elif name == 'Cabo Verde':
-            name = 'Cape Verde'
-        elif name == 'Congo, Democratic Republic of the':
-            name = 'Democratic Republic of Congo'
-        elif name == 'Iran (Islamic Republic of)':
-            name = 'Iran'
-        elif name == "Lao People's Democratic Republic":
-            name = 'Laos'
-        elif name == 'Micronesia (Federated States of)':
-            name = 'Micronesia (country)'
-        elif name == 'Moldova, Republic of':
-            name = 'Moldova'
-        elif name == 'Palestine, State of':
-            name = 'Palestine'
-        elif name == 'Russian Federation':
-            name = 'Russia'
-        elif name == 'Korea, Republic of':
-            name = 'South Korea'
-        elif name == 'Syrian Arab Republic':
-            name = 'Syria'
-        elif name == 'Taiwan, Province of China':
-            name = 'Taiwan'
-        elif name == 'Tanzania, United Republic of':
-            name = 'Tanzania'
-        elif name == 'Timor-Leste':
-            name = 'Timor'
-        elif name == 'United Kingdom of Great Britain and Northern Ireland':
-            name = 'United Kingdom'
-        elif name == 'United States of America':
-            name = 'United States'
-        elif name == 'Holy See':
-            name = 'Vatican'
-        elif name == 'Venezuela (Bolivarian Republic of)':
-            name = 'Venezuela'
-        elif name == 'Viet Nam':
-            name = 'Vietnam'
-        elif name == 'Falkland Islands (Malvinas)':
-            name = 'Falkland Islands'
-        elif name == 'Saint Helena, Ascension and Tristan da Cunha':
-            name = 'Saint Helena'
+            for pattern in unicode_names:
+                if (pattern in country['name']):
+                    name = unicode_names[pattern]
+                    match = True
+
+            if not match:
+                logging.error(f'unicode error - {country["name"]=}')
+                exit()
+
+        for pattern in matching_names:
+            if name == pattern:
+                print(f'match, {pattern=}')
+                name = matching_names[pattern]
 
         countries.append({
             'name': name,
             'iso': country['alpha-3']
         })
 
+logging.info(f'  DONE')
+
 # Create data superset
+logging.info(f'Create dataset ...')
+
 dataset = {}
 
 delta = datetime.timedelta(days=1)
@@ -205,11 +220,19 @@ while start_date <= end_date:
             'people_vaccinated_per_hundred': 0,
             'people_fully_vaccinated_per_hundred': 0,
             'daily_vaccinations_per_million': 0,
+            'total_boosters': 0,
+            'total_boosters_per_hundred': 0,
+            'daily_people_vaccinated': 0,
+            'daily_people_vaccinated_per_hundred': 0
         }
 
     start_date += delta
 
+logging.info(f'  DONE')
+
 # Go through the OWID files and save them to the dataset
+logging.info(f'Parse data ...')
+
 countries_to_skip = [
     'date',
     'World',
@@ -222,6 +245,11 @@ countries_to_skip = [
     'North America',
     'Oceania',
     'South America',
+    'Summer Olympics 2020',
+    'High income',
+    'Low income',
+    'Lower middle income',
+    'Upper middle income',
 ]
 
 for file_url in OWID_FILES:
@@ -244,14 +272,16 @@ for file_url in OWID_FILES:
                         continue
 
                     if row[0] not in dataset:
-                        print(f'error - {row[0]} not in dataset')
+                        logging.error(f'error - {row[0]} not in the country list')
                         exit()
 
                     if header[i] not in dataset[row[0]]:
-                        print(f'error - {header[i]} not in dataset date')
+                        logging.error(f'error - {header[i]} not in dataset date')
                         exit()
 
                     dataset[row[0]][header[i]][column_name] = row[i]
+
+logging.info(f'  DONE')
 
 # Read vaccination data
 countries_to_skip = [
@@ -273,6 +303,10 @@ countries_to_skip = [
     'South America',
     'Wales',
     'World',
+    'High income',
+    'Low income',
+    'Lower middle income',
+    'Upper middle income',
 ]
 
 filename = DL_FOLDER + os.path.basename(VACCIONATION_FILE)
@@ -291,9 +325,6 @@ with open(filename, 'r', encoding='utf-8') as csvfile:
         # Everything else is data
         else:
             for i in range(len(header)):
-                if row[0] == 'Faeroe Islands':
-                    row[0] = 'Faroe Islands'
-
                 if row[0] in countries_to_skip:
                     continue
 
@@ -374,7 +405,11 @@ query += 'daily_vaccinations TEXT, '
 query += 'total_vaccinations_per_hundred TEXT, '
 query += 'people_vaccinated_per_hundred TEXT, '
 query += 'people_fully_vaccinated_per_hundred TEXT, '
-query += 'daily_vaccinations_per_million TEXT'
+query += 'daily_vaccinations_per_million TEXT, '
+query += 'total_boosters TEXT, '
+query += 'total_boosters_per_hundred TEXT, '
+query += 'daily_people_vaccinated TEXT, '
+query += 'daily_people_vaccinated_per_hundred TEXT'
 query += ');'
 
 con = sqlite3.connect(OUTPUT_DB)
@@ -390,13 +425,14 @@ for dk in dataset:
         if cc in cwnd:
             continue
         else:
-            query = 'INSERT INTO dataset VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+            query = 'INSERT INTO dataset VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
 
             row = []
             for key in dataset[dk][cc]:
                 row.append(dataset[dk][cc][key])
 
-            if len(row) != 28:
+            if len(row) != 32:
+                logging.error(f'{len(row)=}')
                 print(f'ERROR - {dk}, {cc}, {dataset[dk][cc]}')
                 exit()
 
